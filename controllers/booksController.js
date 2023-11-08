@@ -23,7 +23,7 @@ const getBook = async (req, res, next) => {
 	try {
 		const {id} = req.params;
 		const book = await Books.findById(id);
-		if (!book) {
+		if (!book || book.deleted) {
 			throw new CustomError('BOOK_NOT_FOUND', 'Book Not Found', 404);
 		}
 
@@ -38,7 +38,7 @@ const getBook = async (req, res, next) => {
 
 const getBooks = async (req, res, next) => {
 	try {
-		const books = await Books.find();
+		const books = await Books.find({deleted: false}).select({deleted: 0});
 		res.status(200).json({
 			success: true,
 			books,
@@ -78,7 +78,8 @@ const deleteBook = async (req, res, next) => {
 			throw new CustomError('BOOK_NOT_FOUND', 'Book Not Found', 404);
 		}
 
-		await Books.findByIdAndDelete(id);
+		book.deleted = true;
+		await book.save();
 		res.status(200).json({
 			success: true,
 			message: 'Book Deleted Successfully',
